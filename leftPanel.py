@@ -2,6 +2,7 @@ from PyQt5.QtCore import Qt, QSortFilterProxyModel, QAbstractTableModel, QVarian
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtSql import QSqlQuery, QSqlQueryModel
 from uiLeftPanel import Ui_LeftPanel
+from filterProxyModel import FilterProxyModel
 
 '''
 Left Panel UI contents
@@ -199,11 +200,6 @@ class LeftPanel(QWidget):
         typesLink = ["videos_tags_link", "videos_yt_tags_link"]
         sort = ["T.tag_name", "ct"]
         sortDir = ["ASC", "DESC"]
-        # queryTemplate = f"""SELECT tag_name FROM {types[self.tagType]}
-        #                     WHERE video_id IN ("""
-        # queryTemplate += ", ".join(["(?)" for video_id in video_ids])
-        # queryTemplate += """)\nGROUP BY tag_name
-        #                     HAVING count(*) = (?)"""
         queryTemplate = f"""SELECT T.tag_name, T.tag_name || '  (' || IFNULL(ct, 0) || ')', ct
                             FROM (
                                 SELECT tag_name FROM {typesLink[self.tagType]}
@@ -258,23 +254,6 @@ class LeftPanel(QWidget):
         self.tagListBeta.setModel(pmodel)
         self.tagListBeta.setModelColumn(1)
         self.tagListBeta.show()
-
-
-class FilterProxyModel(QSortFilterProxyModel):
-    '''
-    Custom subclass of QSortFilterProxyModel to filter out
-    items from filterListBeta that are present in filterListAlpha
-    '''
-    def __init__(self):
-        super().__init__()
-        self.filteredSet = set()
-
-    def setFilteredSet(self, qset):
-        self.filteredSet = qset.copy()
-
-    def filterAcceptsRow(self, sourceRow, sourceParent):
-        item = self.sourceModel().index(sourceRow, 0, sourceParent).data()
-        return False if item in self.filteredSet else True
 
 
 class FilterListTableModel(QAbstractTableModel):
