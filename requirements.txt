@@ -1,4 +1,3 @@
-pysqlite3
 pyqt5
 google-api-python-client
 google-auth-httplib2
