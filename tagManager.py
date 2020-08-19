@@ -12,12 +12,22 @@ class TagManager(QDialog):
         self.importer = self.mainWindow.importer
 
         # Naming convenience
+        self.tagChildDropDown = self.ui.tagChildDropDown
         self.tagTypeDropDown = self.ui.tagTypeDropDown
         self.tagSortDropDown = self.ui.tagSortDropDown
         self.tagSortDirDropDown = self.ui.tagSortDirDropDown
+
         self.tagSearchBar = self.ui.tagSearchBar
         self.tagList = self.ui.tagList
+        self.oldTagName = self.ui.oldTagName
+        self.newTagName = self.ui.newTagName
         self.removeTagButton = self.ui.removeTagButton
+        self.renameTagButton = self.ui.renameTagButton
+
+        self.parentTagSearchBar = self.ui.parentTagSearchBar
+        self.parentTagListAlpha = self.ui.parentTagListAlpha
+        self.parentTagListBeta = self.ui.parentTagListBeta
+
         self.okButton = self.ui.okButton
         self.applyButton = self.ui.applyButton
         self.cancelButton = self.ui.cancelButton
@@ -36,6 +46,8 @@ class TagManager(QDialog):
         # Initialization
         self.tagType = 0
         self.removeTagButton.setDisabled(True)
+        self.renameTagButton.setDisabled(True)
+        self.oldTagName.setText("Old tag name")
         self.beginTransaction()
         self.tagListUpdate()
 
@@ -102,3 +114,17 @@ class TagManager(QDialog):
             self.removeTagButton.setEnabled(True)
         else:
             self.removeTagButton.setDisabled(True)
+
+
+'''
+Shit to wire up:
+tagChildDropDown -> filter tagList for only tags that have parents
+oldTagName -> set to current selected tag in tagList
+newTagName -> gray out renameTag if empty
+parentTagSearchBar -> filter parentTagListAlpha
+parentTagListAlpha -> double click to add parent child tag relationship, update parentTagListBeta
+    CHECK FOR CYCLES
+parentTagListBeta -> double click to remove parent child tag relationship, update parentTagListAlpha
+
+(update importer to add recursively add parent tags)
+'''
