@@ -60,6 +60,7 @@ class TagManager(QDialog):
 
     def tagSearchBarTextChanged(self):
         self.tagListUpdate()
+        self.removeTagButtonUpdate()
 
     def tagSearchBarReturnPressed(self):
         tag_name = self.tagSearchBar.text()
