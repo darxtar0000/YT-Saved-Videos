@@ -1,0 +1,6 @@
+__pycache__/
+thumbnails/c/*
+thumbnails/p/*
+thumbnails/v/*
+credentials.json
+client_secrets.json
