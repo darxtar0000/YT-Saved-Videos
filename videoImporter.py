@@ -89,7 +89,7 @@ class VideoImporter:
         for tag_name in tag_list:
             if not self.tagInDb(tag_name, yt_tags):
                 query = QSqlQuery()
-                query.prepare("""INSERT INTO {} VALUES (?)""".format(table_name))
+                query.prepare(f"""INSERT INTO {table_name} VALUES (?)""")
                 query.addBindValue(tag_name)
                 query.exec()
 
@@ -99,14 +99,32 @@ class VideoImporter:
         table_name = "yt_tags" if yt_tags else "tags"
         for tag_name in tag_list:
             query = QSqlQuery()
-            query.prepare("""DELETE FROM {} WHERE tag_name = (?)""".format(table_name_link))
+            query.prepare(f"""DELETE FROM {table_name_link} WHERE tag_name = (?)""")
             query.addBindValue(tag_name)
             query.exec()
             
             query = QSqlQuery()
-            query.prepare("""DELETE FROM {} WHERE tag_name = (?)""".format(table_name))
+            query.prepare(f"""DELETE FROM {table_name} WHERE tag_name = (?)""")
             query.addBindValue(tag_name)
             query.exec()
+
+    def renameTag(self, old_tag, new_tag, yt_tags=False):
+        # create new tag -> add new tag to videos in link -> delete tag from link -> delete from tags
+        table_name_link = "videos_yt_tags_link" if yt_tags else "videos_tags_link"
+        parent_table = "tags_parent" if yt_tags else "yt_tags_parent"
+        self.addTags([new_tag], yt_tags)
+        queries = [(table_name_link, "tag_name", "tag_name"),
+                   (parent_table, "child_tag", "child_tag"),
+                   (parent_table, "parent_tag", "parent_tag")]
+
+        for q in queries:
+            query = QSqlQuery()
+            query.prepare(f"""UPDATE {q[0]} SET {q[1]} = (?) WHERE {q[2]} = (?)""")
+            query.addBindValue(new_tag)
+            query.addBindValue(old_tag)
+            query.exec()
+
+        self.removeTags([old_tag], yt_tags)
 
     def downloadVideoThumbnail(self, video_id, thumbnails, refresh=False):
         thumbnailPath = "thumbnails/v/"
