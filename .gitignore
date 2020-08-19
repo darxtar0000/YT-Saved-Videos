@@ -3,5 +3,5 @@ thumbnails/c/*
 thumbnails/p/*
 thumbnails/v/*
 credentials.json
-client_secrets.json
+client_secret.json
 saved.db
