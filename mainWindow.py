@@ -210,9 +210,9 @@ TODO LIST
 finish filter sorting
 rich text editor -> tabs? dialog for editting?
 ignored videos table
-rename tag feature in tag manager
+(DONE) rename tag feature in tag manager
     create new tag -> add new tag to videos in link -> delete tag from link -> delete from tags
-parent tag:
+(DONE) parent tag:
     when adding tag, check up parent tree and add all ancestor tags
     when adding parent child relationship, check for cycle
     when deleting tag, -> delete relationship -> delete from videos_tags_link -> delete from tags
