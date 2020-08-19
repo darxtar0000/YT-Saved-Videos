@@ -145,18 +145,13 @@ class VideoImporter:
 
     def downloadChannelThumbnail(self, channel_id, thumbnails, refresh=False):
         thumbnailPath = "thumbnails/c/"
-        print()
-        print(channel_id)
         if not refresh and f"{channel_id}.jpg" in os.listdir(thumbnailPath):
-            print(f"skipping {channel_id}")
             return True
         for size in ("medium", "default"):
             if size in thumbnails:
                 url = thumbnails[size]["url"]
-                print(url)
                 thumbnailRequest = requests.get(url)
                 if thumbnailRequest.status_code == 200:
-                    print("code 200")
                     with open(os.path.join(thumbnailPath, channel_id + ".jpg"), "wb") as f:
                         f.write(thumbnailRequest.content)
                         return True
