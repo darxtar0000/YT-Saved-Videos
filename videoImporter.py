@@ -108,8 +108,75 @@ class VideoImporter:
             query.addBindValue(tag_name)
             query.exec()
 
+    def detectParentChildCycle(self, parent_tag, child_tag, yt_tags=False):
+        parent_table = "yt_tags_parent" if yt_tags else "tags_parent"
+        
+        # Build directed graph of child -> parent relationships
+        query = QSqlQuery(f"SELECT parent_tag, child_tag FROM {parent_table}")
+        query.exec()
+        directedGraph = {}
+        while query.next():
+            pTag = query.value(0)
+            cTag = query.value(1)
+            directedGraph.setdefault(pTag, set())
+            directedGraph.setdefault(cTag, set())
+            directedGraph[cTag].add(pTag)
+
+        # Insert new relation into graph
+        directedGraph.setdefault(child_tag, set())
+        directedGraph.setdefault(parent_tag, set())
+        directedGraph[child_tag].add(parent_tag)
+
+        # DFS to find cycle
+        def DFSutil(v, visited, recStack):
+            visited[v] = True
+            recStack[v] = True
+            for nxt in directedGraph[v]:
+                if visited[nxt] is False:
+                    if DFSutil(nxt, visited, recStack):
+                        return True
+                elif recStack[nxt] is True:
+                    return True
+
+            recStack[v] = False
+            return False
+
+        tags = directedGraph.keys()
+        visited = {tag: False for tag in tags}
+        recStack = {tag: False for tag in tags}
+        for tag in tags:
+            if visited[tag] is False:
+                if DFSutil(tag, visited, recStack):
+                    return True
+        return False
+
+    def addParentChild(self, parent_tag, child_tag, yt_tags=False):
+        parent_table = "yt_tags_parent" if yt_tags else "tags_parent"
+
+        invalidInsert = self.detectParentChildCycle(parent_tag, child_tag, yt_tags=False)
+        if invalidInsert:
+            print("Invalid parent child insert")
+            print(f"Inserting {parent_tag} <- {child_tag} results in cycle")
+            return 
+        queryTemplate = f"""INSERT INTO {parent_table} VALUES (?, ?)"""
+        query = QSqlQuery()
+        query.prepare(queryTemplate)
+        query.addBindValue(parent_tag)
+        query.addBindValue(child_tag)
+        query.exec()
+        print(f"added {parent_tag} <- {child_tag} link")
+
+    def removeParentChild(self, parent_tag, child_tag, yt_tags=False):
+        parent_table = "yt_tags_parent" if yt_tags else "tags_parent"
+        queryTemplate = f"""DELETE FROM {parent_table} WHERE parent_tag = (?) AND child_tag = (?)"""
+        query = QSqlQuery()
+        query.prepare(queryTemplate)
+        query.addBindValue(parent_tag)
+        query.addBindValue(child_tag)
+        query.exec()
+        print(f"removed {parent_tag} <- {child_tag} link")
+
     def renameTag(self, old_tag, new_tag, yt_tags=False):
-        # create new tag -> add new tag to videos in link -> delete tag from link -> delete from tags
         table_name_link = "videos_yt_tags_link" if yt_tags else "videos_tags_link"
         parent_table = "tags_parent" if yt_tags else "yt_tags_parent"
         self.addTags([new_tag], yt_tags)
@@ -125,6 +192,57 @@ class VideoImporter:
             query.exec()
 
         self.removeTags([old_tag], yt_tags)
+
+    def getAllParents(self, tagSet, yt_tags=False):
+        parent_table = "yt_tags_parent" if yt_tags else "tags_parent"
+
+        # Build directed graph of child to parent relationships
+        query = QSqlQuery(f"SELECT parent_tag, child_tag FROM {parent_table}")
+        query.exec()
+        directedGraph = {}
+        while query.next():
+            pTag = query.value(0)
+            cTag = query.value(1)
+            directedGraph.setdefault(pTag, set())
+            directedGraph.setdefault(cTag, set())
+            directedGraph[cTag].add(pTag)
+
+        def recursiveGetParents(tag, directedGraph):
+            newTagSet = set()
+            newTagSet.add(tag)
+            for newTag in directedGraph[tag]:
+                newTagSet = newTagSet | recursiveGetParents(newTag, directedGraph)
+            return newTagSet
+
+        newTagSet = set()
+        for tag in tagSet:
+            newTagSet = newTagSet | recursiveGetParents(tag, directedGraph)
+        return newTagSet
+
+    def addVideoTags(self, video_ids, tag_list, yt_tags=False):
+        table_name = "videos_yt_tags_link" if yt_tags else "videos_tags_link"
+        self.addTags(tag_list, yt_tags)
+        tagSet = set(tag_list)
+        newTagSet = self.getAllParents(tagSet, yt_tags)
+
+        for video_id in video_ids:
+            for tag_name in newTagSet:
+                query = QSqlQuery()
+                query.prepare(f"""INSERT INTO {table_name} VALUES (?, ?)""")
+                query.addBindValue(video_id)
+                query.addBindValue(tag_name)
+                query.exec()
+
+    def removeVideoTags(self, video_ids, tag_list, yt_tags=False):
+        table_name = "videos_yt_tags_link" if yt_tags else "videos_tags_link"
+
+        for video_id in video_ids:
+            for tag_name in tag_list:
+                query = QSqlQuery()
+                query.prepare(f"""DELETE FROM {table_name} WHERE video_id = (?) AND tag_name = (?)""")
+                query.addBindValue(video_id)
+                query.addBindValue(tag_name)
+                query.exec()
 
     def downloadVideoThumbnail(self, video_id, thumbnails, refresh=False):
         thumbnailPath = "thumbnails/v/"
@@ -437,31 +555,8 @@ class VideoImporter:
         _getDetails(channel_ids)
         self.generateChannelThumbnails(channel_ids)
 
-    def addVideoTags(self, video_ids, tag_list, yt_tags=False):
-        table_name = "videos_yt_tags_link" if yt_tags else "videos_tags_link"
-        self.addTags(tag_list, yt_tags)
-
-        for video_id in video_ids:
-            for tag_name in tag_list:
-                query = QSqlQuery()
-                query.prepare("""INSERT INTO {} VALUES (?, ?)""".format(table_name))
-                query.addBindValue(video_id)
-                query.addBindValue(tag_name)
-                query.exec()
-
-    def removeVideoTags(self, video_ids, tag_list, yt_tags=False):
-        table_name = "videos_yt_tags_link" if yt_tags else "videos_tags_link"
-
-        for video_id in video_ids:
-            for tag_name in tag_list:
-                query = QSqlQuery()
-                query.prepare("""DELETE FROM {} WHERE video_id = (?) AND tag_name = (?)""".format(table_name))
-                query.addBindValue(video_id)
-                query.addBindValue(tag_name)
-                query.exec()
-
 
 if __name__ == "__main__":
     importer = VideoImporter()
     importer.connectDatabase()
-    importer.updateChannelThumbnails(True)
+    # importer.updateChannelThumbnails(True)
