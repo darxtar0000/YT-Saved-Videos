@@ -5,3 +5,4 @@ thumbnails/v/*
 credentials.json
 client_secret.json
 saved.db
+saved.db-journal
