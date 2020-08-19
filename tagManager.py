@@ -36,9 +36,13 @@ class TagManager(QDialog):
         self.tagTypeDropDown.currentTextChanged['QString'].connect(self.tagTypeDropDownChanged)
         self.tagSortDropDown.currentTextChanged['QString'].connect(self.tagListUpdate)
         self.tagSortDirDropDown.currentTextChanged['QString'].connect(self.tagListUpdate)
+
         self.tagSearchBar.textChanged['QString'].connect(self.tagSearchBarTextChanged)
         self.tagSearchBar.returnPressed.connect(self.tagSearchBarReturnPressed)
+        self.newTagName.textChanged['QString'].connect(self.renameTagButtonUpdate)
         self.removeTagButton.clicked.connect(self.removeTagButtonClicked)
+        self.renameTagButton.clicked.connect(self.renameTagButtonClicked)
+
         self.okButton.clicked.connect(self.okButtonClicked)
         self.applyButton.clicked.connect(self.applyButtonClicked)
         self.cancelButton.clicked.connect(self.cancelButtonClicked)
@@ -47,7 +51,6 @@ class TagManager(QDialog):
         self.tagType = 0
         self.removeTagButton.setDisabled(True)
         self.renameTagButton.setDisabled(True)
-        self.oldTagName.setText("Old tag name")
         self.beginTransaction()
         self.tagListUpdate()
 
@@ -72,6 +75,12 @@ class TagManager(QDialog):
         tag_list = [index.siblingAtColumn(0).data() for index in self.tagList.selectionModel().selectedIndexes()]
         self.importer.removeTags(tag_list, yt_tags=self.tagType)
         self.tagListUpdate()
+
+    def renameTagButtonClicked(self):
+        self.importer.renameTag(self.oldTagName.text(), self.newTagName.text(), yt_tags=self.tagType)
+        self.newTagName.clear()
+        self.tagListUpdate()
+        self.oldTagNameUpdate()
 
     def okButtonClicked(self):
         self.db.commit()
@@ -108,7 +117,14 @@ class TagManager(QDialog):
         self.tagList.setModel(model)
         self.tagList.setModelColumn(1)
         self.tagList.show()
-        self.tagList.selectionModel().selectionChanged.connect(self.removeTagButtonUpdate)
+        self.tagList.selectionModel().selectionChanged.connect(self.tagListSelectionChanged)
+
+    def tagListSelectionChanged(self):
+        self.removeTagButtonUpdate()
+        self.oldTagNameUpdate()
+
+    def oldTagNameUpdate(self):
+        self.oldTagName.setText(self.tagList.currentIndex().siblingAtColumn(0).data())
 
     def removeTagButtonUpdate(self):
         if self.tagList.selectionModel().hasSelection():
@@ -116,16 +132,23 @@ class TagManager(QDialog):
         else:
             self.removeTagButton.setDisabled(True)
 
+    def renameTagButtonUpdate(self):
+        if self.tagList.selectionModel().hasSelection() and len(self.newTagName.text()) > 0:
+            self.renameTagButton.setEnabled(True)
+        else:
+            self.renameTagButton.setDisabled(True)
+
 
 '''
 Shit to wire up:
 tagChildDropDown -> filter tagList for only tags that have parents
-oldTagName -> set to current selected tag in tagList
-newTagName -> gray out renameTag if empty
+(DONE) oldTagName -> set to current selected tag in tagList
+(DONE) newTagName -> gray out renameTag if empty
+(DONE) renameTagButton -> send old tag name and new tag name to importer
 parentTagSearchBar -> filter parentTagListAlpha
 parentTagListAlpha -> double click to add parent child tag relationship, update parentTagListBeta
     CHECK FOR CYCLES
 parentTagListBeta -> double click to remove parent child tag relationship, update parentTagListAlpha
 
-(update importer to add recursively add parent tags)
+(DONE) (update importer to add recursively add parent tags)
 '''
