@@ -77,10 +77,12 @@ class YouTubeApi:
         )
         response = request.execute()
         nextPageToken = response.get("nextPageToken")
-        if nextPageToken is None:
-            return response["items"]
-        else:
-            return response["items"] + self.getVideosFromPlaylist(playlistId, nextPageToken)
+        totalResults = response["pageInfo"]["totalResults"]
+        # if nextPageToken is None:
+        #     return response["items"]
+        # else:
+        #     return response["items"] + self.getVideosFromPlaylist(playlistId, pageToken=nextPageToken)
+        return response["items"], nextPageToken, totalResults
 
     def getChannelDetails(self, channelIds, pageToken=""):
         '''
