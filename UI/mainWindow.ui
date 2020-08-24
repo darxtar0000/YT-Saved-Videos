@@ -165,22 +165,50 @@
    </property>
    <widget class="QMenu" name="menuImport">
     <property name="title">
-     <string>File</string>
+     <string>Import</string>
     </property>
-    <addaction name="actionImport_playlists"/>
-    <addaction name="actionManage_tags"/>
+    <addaction name="actionUpdate"/>
+    <addaction name="actionForceUpdate"/>
+   </widget>
+   <widget class="QMenu" name="menuManagement">
+    <property name="title">
+     <string>Management</string>
+    </property>
+    <addaction name="actionManageTags"/>
+    <addaction name="actionManagePlaylists"/>
    </widget>
    <addaction name="menuImport"/>
+   <addaction name="menuManagement"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionImport_playlists">
+  <action name="actionImportPlaylists">
    <property name="text">
-    <string>Import playlists</string>
+    <string>Get playlists</string>
    </property>
   </action>
   <action name="actionManage_tags">
    <property name="text">
     <string>Manage tags</string>
+   </property>
+  </action>
+  <action name="actionManageTags">
+   <property name="text">
+    <string>Manage tags</string>
+   </property>
+  </action>
+  <action name="actionUpdate">
+   <property name="text">
+    <string>Update from playlists</string>
+   </property>
+  </action>
+  <action name="actionForceUpdate">
+   <property name="text">
+    <string>Force update from playlists</string>
+   </property>
+  </action>
+  <action name="actionManagePlaylists">
+   <property name="text">
+    <string>Manage playlists</string>
    </property>
   </action>
  </widget>
