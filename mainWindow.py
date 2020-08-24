@@ -26,8 +26,10 @@ class MainWindow(QMainWindow):
         self.videoTable = self.ui.videoTable
         self.tableSearchBar = self.ui.tableSearchBar
         self.menubar = self.ui.menubar
-        self.actionImport_playlists = self.ui.actionImport_playlists
-        self.actionManage_tags = self.ui.actionManage_tags
+        self.actionUpdate = self.ui.actionUpdate
+        self.actionForceUpdate = self.ui.actionForceUpdate
+        self.actionManageTags = self.ui.actionManageTags
+        self.actionManagePlaylists = self.ui.actionManagePlaylists
         self.tableSortDropDown = self.ui.tableSortDropDown
         self.tableSortDirDropDown = self.ui.tableSortDirDropDown
 
@@ -51,8 +53,9 @@ class MainWindow(QMainWindow):
 
         # Signals
         self.splitter.splitterMoved.connect(self.rightPanel.thumbnailUpdate)
-        self.actionImport_playlists.triggered.connect(self.importPlaylists)
-        self.actionManage_tags.triggered.connect(self.openTagManager)
+        self.actionUpdate.triggered.connect(self.update)
+        self.actionForceUpdate.triggered.connect(self.forceUpdate)
+        self.actionManageTags.triggered.connect(self.openTagManager)
         self.tableSearchBar.returnPressed.connect(self.tableUpdateTriggered)
         self.tableSortDropDown.currentTextChanged['QString'].connect(self.tableUpdateTriggered)
         self.tableSortDirDropDown.currentTextChanged['QString'].connect(self.tableUpdateTriggered)
@@ -193,8 +196,13 @@ class MainWindow(QMainWindow):
                  query.value(6)]
         return video
 
-    def importPlaylists(self):
-        self.importer.importVideosFromAllPlaylists()
+    def update(self):
+        self.importer.importVideosFromAllPlaylists(refresh=False, update=True)
+        self.leftPanel.filterListBetaUpdate()
+        self.videoTableUpdate()
+
+    def forceUpdate(self):
+        self.importer.importVideosFromAllPlaylists(refresh=True, update=False)
         self.leftPanel.filterListBetaUpdate()
         self.videoTableUpdate()
 
@@ -220,4 +228,10 @@ ignored videos table
 tag autocomplete
 import video duration
 display video duration
+way to delete video from database
+
+Playlist editor
+Separate importing into update (from playlists + liked, stop when page of 50 has no new videos)
+    Full import (delete playlist links and re-add)
+future idea: allow editting of account playlists using api?
 '''
