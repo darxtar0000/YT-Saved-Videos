@@ -77,7 +77,9 @@ class RightPanel(QWidget):
 
         htmlText = f"""<h2 class="title style-scope ytd-video-primary-info-renderer"><a href="https://www.youtube.com/watch?v={self.video[VIDEO_ID]}">{self.video[VIDEO_TITLE]}</a></h2>
                        <div class="style-scope ytd-video-primary-info-renderer"><span id="dot" class="style-scope ytd-video-primary-info-renderer">Published: {publish_date}</span></div>
-                       <div class="style-scope ytd-video-primary-info-renderer"><span class="style-scope ytd-video-primary-info-renderer">Saved: {save_date}</span><br></div>
+                       <div class="style-scope ytd-video-primary-info-renderer"><span class="style-scope ytd-video-primary-info-renderer">Saved: {save_date}</span></div>
+                       <br>
+                       <img src="thumbnails/c/{self.video[CHANNEL_ID] + ".jpg"}" alt="channel-thumbnail" width="45" height="45">
                        <h4 class="style-scope ytd-video-secondary-info-renderer"><a href="https://www.youtube.com/channel/{self.video[CHANNEL_ID]}">{channel_title}</a></h4>
                        <div class="style-scope ytd-video-secondary-info-renderer"><span class="style-scope yt-formatted-string" dir="auto">{description}</span></div>"""
         self.videoDetails.setHtml(htmlText)
@@ -88,9 +90,18 @@ class RightPanel(QWidget):
             return
         self.notes.setHtml(self.video[NOTES])
 
+
     def notesSaveButtonClicked(self):
         if None in self.video:
             return
+
+        # Only used to reset notes with incorrect font size
+        cursor = self.notes.textCursor()
+        self.notes.selectAll()
+        self.notes.setFontPointSize(10)
+        self.notes.setTextCursor(cursor)
+
+        # Save html to databse
         query = QSqlQuery()
         query.prepare("""UPDATE videos SET notes = (?) WHERE video_id = (?)""")
         query.addBindValue(self.notes.toHtml())
