@@ -210,7 +210,7 @@ class VideoImporter:
         def recursiveGetParents(tag, directedGraph):
             newTagSet = set()
             newTagSet.add(tag)
-            for newTag in directedGraph[tag]:
+            for newTag in directedGraph.get(tag, set()):
                 newTagSet = newTagSet | recursiveGetParents(newTag, directedGraph)
             return newTagSet
 
@@ -316,7 +316,7 @@ class VideoImporter:
         if len(failedChannels) > 0:
             print(f"Couldn't generate thumbnails for these channels: {failedChannels}")
 
-    def regenerateAllVideoThumbnails(self, refresh=True):
+    def regenerateAllVideoThumbnails(self, refresh=False):
         query = QSqlQuery("""SELECT video_id FROM videos""")
         query.exec()
         video_ids = []
@@ -324,7 +324,7 @@ class VideoImporter:
             video_ids.append(query.value(0))
         self.generateVideoThumbnails(video_ids, refresh)
 
-    def regenerateAllChannelThumbnails(self, refresh=True):
+    def regenerateAllChannelThumbnails(self, refresh=False):
         query = QSqlQuery("""SELECT channel_id FROM channels""")
         query.exec()
         channel_ids = []
@@ -377,7 +377,7 @@ class VideoImporter:
             playlist_ids.append(playlist["id"])
         return playlist_ids
 
-    def insertVideo(self, video, playlist_id=None, refresh=False):
+    def insertVideo(self, video, refresh=False):
         '''
         Inserts video into db
         '''
@@ -387,13 +387,6 @@ class VideoImporter:
         publish_date = video["contentDetails"]["videoPublishedAt"]
         save_date = video["snippet"]["publishedAt"]
         thumbnails = video["snippet"]["thumbnails"]
-
-        if playlist_id is not None:
-            query = QSqlQuery()
-            query.prepare("""INSERT INTO videos_playlists_link VALUES (?,?)""")
-            query.addBindValue(video_id)
-            query.addBindValue(playlist_id)
-            query.exec()
 
         if not self.videoInDb(video_id):
             query = QSqlQuery("""INSERT INTO videos VALUES (?,?,?,?,?,NULL,NULL)""")
@@ -412,45 +405,95 @@ class VideoImporter:
                 query.exec()
 
             self.addVideoTags([video_id], ["untagged"])
-            self.downloadVideoThumbnail(video_id, thumbnails, refresh)
+            self.downloadVideoThumbnail(video_id, thumbnails, refresh=refresh)
             
             return True
         else:
             return False
 
-    def importVideosFromPlaylist(self, playlist_id):
+    def addVideoToPlaylist(self, video_id, playlist_id):
+        query = QSqlQuery()
+        query.prepare("""INSERT INTO videos_playlists_link VALUES (?,?)""")
+        query.addBindValue(video_id)
+        query.addBindValue(playlist_id)
+        query.exec()
+
+    def importVideosFromPlaylist(self, playlist_id, refresh=False, update=False):
         '''
         Retrieves videos from playlist
         '''
-        videos = self.api.getVideosFromPlaylist(playlist_id)
+        if refresh:
+            update = False
+            query = QSqlQuery()
+            query.prepare("""DELETE FROM videos_playlists_link WHERE playlist_id = (?)""")
+            query.addBindValue(playlist_id)
+            query.exec()
+
         privateVids = []
         newVids = 0
-        for video in videos:
-            if video["status"]["privacyStatus"] != "private":
-                if self.insertVideo(video, playlist_id):
-                    newVids += 1
-            else:
-                privateVids.append(video["contentDetails"]["videoId"])
-        # print(f"Imported {newVids} new videos out of {len(videos)} videos from playlist.")
+        videoCount = 0
+        pageToken = ""
+        while pageToken is not None:
+            thisBatchNewVids = 0
+            videos, pageToken, totalResults = self.api.getVideosFromPlaylist(playlist_id, pageToken=pageToken)
+            videoCount = totalResults
+            for video in videos:
+                if video["status"]["privacyStatus"] != "private" and video["snippet"]["title"] != "Deleted video":
+                    self.addVideoToPlaylist(video["contentDetails"]["videoId"], playlist_id)
+                    if self.insertVideo(video):
+                        newVids += 1
+                        thisBatchNewVids += 1
+                else:
+                    privateVids.append(video["contentDetails"]["videoId"])
+
+            if update and thisBatchNewVids == 0:
+                '''
+                If update flag is enabled (default=False) will stop requesting more videos from
+                API if no new videos were added to database. (IMPORTANT) Works on the assumption
+                that the playlist is sorted by "Date added (newest)"" because you can't choose
+                the order to retrieve items through the API. Playlists on YT are default sorted
+                by "Date added (oldest)" while the liked videos playlist is sorted by
+                "Date added (newest)". Recommend setting default to False for this reason.
+
+                Should priority be placed on limiting API calls or functional user experience?
+                '''
+                break
+        # print(f"Imported {newVids} new videos out of {videoCount} videos from playlist.")
         # print(f"The following {len(privateVids)} videos are private:")
         # print(privateVids)
-        return (newVids, len(videos), privateVids)
+        return (newVids, videoCount, privateVids)
 
-    def importVideosFromAllPlaylists(self):
+    def importVideosFromAllPlaylists(self, refresh=False, update=False):
         '''
         Imports videos from every playlist in database
         '''
+        # Implement way to edit this list within GUI, store as json locally
+        newSortedPlaylists = {"LLCXFHLMlLwecmNCXuqM0ayA",
+                              "PL4X6DXOb6RaTCKvDx9tAoKfyBBgTsi5_k",
+                              "PL4X6DXOb6RaTCugayL-FwwILE2QjRy3eT",
+                              "PL4X6DXOb6RaTfUoPlKHOlq1YGnifjmN94",
+                              "PL4X6DXOb6RaRGa3yuwuxvCwCylP9CSFcC",
+                              "PL4X6DXOb6RaSUpZUMclVqCDaKvs3e4WH3",
+                              "PL4X6DXOb6RaQyYWQMfj9gGvpdEPfmIxtO",
+                              "PL4X6DXOb6RaQyYWQMfj9gGvpdEPfmIxtO",
+                              "FLCXFHLMlLwecmNCXuqM0ayA"}
+
+
+
         playlist_ids = self.importUserPlaylists()
         newVids = 0
         totalVids = 0
         privateVidsList = []
         for playlist_id in playlist_ids:
-            nv, tv, pvl = self.importVideosFromPlaylist(playlist_id)
+            # Enables update flag for certain playlists
+            updateChoice = playlist_id in newSortedPlaylists and update
+
+            nv, tv, pvl = self.importVideosFromPlaylist(playlist_id, refresh=refresh, update=updateChoice)
             newVids += nv
             totalVids += tv
             privateVidsList += pvl
         print(f"Imported {newVids} new videos out of {totalVids} videos from playlists.")
-        print(f"The following {len(privateVidsList)} videos are private:")
+        print(f"The following {len(privateVidsList)} videos are private / deleted:")
         print(privateVidsList)
         self.updateVideoDetails()
         self.updateChannelThumbnails()
@@ -560,3 +603,4 @@ if __name__ == "__main__":
     importer = VideoImporter()
     importer.connectDatabase()
     # importer.updateChannelThumbnails(True)
+    importer.importVideosFromAllPlaylists(refresh=True, update=True)
