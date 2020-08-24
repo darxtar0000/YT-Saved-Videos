@@ -75,6 +75,8 @@ class TagManager(QDialog):
 
     def tagSearchBarReturnPressed(self):
         tagName = self.tagSearchBar.text()
+        if len(tagName) == 0:
+            return
         self.importer.addTags([tagName], yt_tags=self.tagType)
         self.tagListUpdate()
 
