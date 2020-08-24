@@ -152,7 +152,7 @@ class LeftPanel(QWidget):
                                     "tag_name", "tag_name"],
                        "filterName": ["B.playlist_title", "B.channel_title",
                                       "tag_name", "tag_name"],
-                       "table": ["videos_playlists_link", "channel_id",
+                       "table": ["videos_playlists_link", "videos",
                                  "videos_tags_link", "videos_yt_tags_link"],
                        "innerJoin": [" A\nINNER JOIN playlists B ON\nA.playlist_id = B.playlist_id",
                                      " A\nINNER JOIN channels B ON\nA.channel_id = B.channel_id",
