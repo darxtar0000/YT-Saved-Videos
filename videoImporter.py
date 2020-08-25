@@ -411,6 +411,23 @@ class VideoImporter:
         else:
             return False
 
+    def removeVideo(self, video):
+        query = QSqlQuery("DELETE FROM videos_playlists_link WHERE video_id = (?)")
+        query.addBindValue(video)
+        query.exec()
+        query = QSqlQuery("DELETE FROM videos_tags_link WHERE video_id = (?)")
+        query.addBindValue(video)
+        query.exec()
+        query = QSqlQuery("DELETE FROM videos_yt_tags_link WHERE video_id = (?)")
+        query.addBindValue(video)
+        query.exec()
+        query = QSqlQuery("DELETE FROM video_thumbnails WHERE video_id = (?)")
+        query.addBindValue(video)
+        query.exec()
+        query = QSqlQuery("DELETE FROM videos WHERE video_id = (?)")
+        query.addBindValue(video)
+        query.exec()
+
     def addVideoToPlaylist(self, video_id, playlist_id):
         query = QSqlQuery()
         query.prepare("""INSERT INTO videos_playlists_link VALUES (?,?)""")
@@ -603,4 +620,4 @@ if __name__ == "__main__":
     importer = VideoImporter()
     importer.connectDatabase()
     # importer.updateChannelThumbnails(True)
-    importer.importVideosFromAllPlaylists(refresh=True, update=True)
+    # importer.importVideosFromAllPlaylists(refresh=True, update=True)
