@@ -6,3 +6,5 @@ credentials.json
 client_secret.json
 saved.db
 saved.db-journal
+test.py
+backup/*
