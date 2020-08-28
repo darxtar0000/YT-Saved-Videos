@@ -11,27 +11,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
-class LineEditKeyboard(QtWidgets.QLineEdit):
-    keyUpPressed = QtCore.pyqtSignal()
-    keyDownPressed = QtCore.pyqtSignal()
-
-    def __init__(self, parent):
-        super().__init__(parent)
-
-    def keyPressEvent(self, event):
-        if event.key() == QtCore.Qt.Key_Up:
-            self.upPressed()
-        if event.key() == QtCore.Qt.Key_Down:
-            self.downPressed()
-        return super(LineEditKeyboard, self).keyPressEvent(event)
-        
-    def upPressed(self):
-        self.keyUpPressed.emit()
-
-    def downPressed(self):
-        self.keyDownPressed.emit()
-
-
 class Ui_LeftPanel(object):
     def setupUi(self, LeftPanel):
         LeftPanel.setObjectName("LeftPanel")
@@ -118,12 +97,6 @@ class Ui_LeftPanel(object):
         self.tagListAlpha.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.tagListAlpha.setObjectName("tagListAlpha")
         self.tagTabVertLayout.addWidget(self.tagListAlpha)
-        # self.tagSearchBar = QtWidgets.QLineEdit(self.tagTab)
-        self.tagSearchBar = LineEditKeyboard(self.tagTab)
-        self.tagSearchBar.setText("")
-        self.tagSearchBar.setClearButtonEnabled(True)
-        self.tagSearchBar.setObjectName("tagSearchBar")
-        self.tagTabVertLayout.addWidget(self.tagSearchBar)
         self.tagListBeta = QtWidgets.QListView(self.tagTab)
         self.tagListBeta.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.tagListBeta.setObjectName("tagListBeta")
@@ -136,6 +109,8 @@ class Ui_LeftPanel(object):
         self.filterTypeDropDown.setCurrentIndex(2)
         self.filterSortDropDown.setCurrentIndex(1)
         self.filterSortDirDropDown.setCurrentIndex(1)
+        self.tagSortDropDown.setCurrentIndex(1)
+        self.tagSortDirDropDown.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(LeftPanel)
 
     def retranslateUi(self, LeftPanel):
@@ -163,8 +138,6 @@ class Ui_LeftPanel(object):
         self.tagSortDirDropDown.setItemText(0, _translate("LeftPanel", "ascending"))
         self.tagSortDirDropDown.setItemText(1, _translate("LeftPanel", "descending"))
         self.tagListAlpha.setToolTip(_translate("LeftPanel", "<html><head/><body><p>Double click to remove tag from selected videos</p></body></html>"))
-        self.tagSearchBar.setToolTip(_translate("LeftPanel", "<html><head/><body><p><span style=\" font-size:9pt;\">Search list of tags. Press enter to apply tag in search box, even if it doesn\'t exist yet</span></p></body></html>"))
-        self.tagSearchBar.setPlaceholderText(_translate("LeftPanel", "Search tags"))
         self.tagListBeta.setToolTip(_translate("LeftPanel", "<html><head/><body><p>Double click to add tag to selected videos</p></body></html>"))
         self.leftTabWidget.setTabText(self.leftTabWidget.indexOf(self.tagTab), _translate("LeftPanel", "Tags"))
 

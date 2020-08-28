@@ -216,6 +216,9 @@
           </item>
           <item>
            <widget class="QComboBox" name="tagSortDropDown">
+            <property name="currentIndex">
+             <number>1</number>
+            </property>
             <item>
              <property name="text">
               <string>by name</string>
@@ -230,6 +233,9 @@
           </item>
           <item>
            <widget class="QComboBox" name="tagSortDirDropDown">
+            <property name="currentIndex">
+             <number>1</number>
+            </property>
             <item>
              <property name="text">
               <string>ascending</string>
@@ -252,22 +258,6 @@
          </property>
          <property name="editTriggers">
           <set>QAbstractItemView::NoEditTriggers</set>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLineEdit" name="tagSearchBar">
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;Search list of tags. Press enter to apply tag in search box, even if it doesn't exist yet&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="placeholderText">
-          <string>Search tags</string>
-         </property>
-         <property name="clearButtonEnabled">
-          <bool>true</bool>
          </property>
         </widget>
        </item>

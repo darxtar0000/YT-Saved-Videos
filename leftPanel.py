@@ -1,5 +1,5 @@
-from PyQt5.QtCore import Qt, QSortFilterProxyModel, QAbstractTableModel, QVariant, QModelIndex, QItemSelectionModel, QAbstractItemModel
-from PyQt5.QtWidgets import QWidget, QCompleter
+from PyQt5.QtCore import Qt, QSortFilterProxyModel, QAbstractTableModel, QVariant, QModelIndex, QItemSelectionModel, QAbstractItemModel, pyqtSignal, QCoreApplication
+from PyQt5.QtWidgets import QWidget, QCompleter, QLineEdit
 from PyQt5.QtSql import QSqlQuery, QSqlQueryModel
 from uiLeftPanel import Ui_LeftPanel
 from filterProxyModel import FilterProxyModel
@@ -31,6 +31,27 @@ tagListAlphaUpdate()
 tagListBetaUpdate()
 '''
 
+class LineEditKeyboard(QLineEdit):
+    keyUpPressed = pyqtSignal()
+    keyDownPressed = pyqtSignal()
+
+    def __init__(self, parent):
+        super().__init__(parent)
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Up:
+            self.upPressed()
+        if event.key() == Qt.Key_Down:
+            self.downPressed()
+        return super(LineEditKeyboard, self).keyPressEvent(event)
+        
+    def upPressed(self):
+        self.keyUpPressed.emit()
+
+    def downPressed(self):
+        self.keyDownPressed.emit()
+
+
 class LeftPanel(QWidget):
     def __init__(self, parent=None):
         super(LeftPanel, self).__init__(parent)
@@ -48,10 +69,21 @@ class LeftPanel(QWidget):
         self.filterListBeta = self.ui.filterListBeta
         self.tagListAlpha = self.ui.tagListAlpha
         self.tagListBeta = self.ui.tagListBeta
-        self.tagSearchBar = self.ui.tagSearchBar
+        # self.tagSearchBar = self.ui.tagSearchBar
         self.tagTypeDropDown = self.ui.tagTypeDropDown
         self.tagSortDropDown = self.ui.tagSortDropDown
         self.tagSortDirDropDown = self.ui.tagSortDirDropDown
+
+        # UI layout setup
+        self.tagSearchBar = LineEditKeyboard(self.ui.tagTab)
+        self.tagSearchBar.setText("")
+        self.tagSearchBar.setClearButtonEnabled(True)
+        self.tagSearchBar.setObjectName("tagSearchBar")
+        self.ui.tagTabVertLayout.insertWidget(2, self.tagSearchBar)
+
+        _translate = QCoreApplication.translate
+        self.tagSearchBar.setToolTip(_translate("LeftPanel", "<html><head/><body><p><span style=\" font-size:9pt;\">Search list of tags. Press enter to apply tag in search box, even if it doesn\'t exist yet</span></p></body></html>"))
+        self.tagSearchBar.setPlaceholderText(_translate("LeftPanel", "Search tags"))
 
         # Signals
         self.filterTypeDropDown.currentTextChanged['QString'].connect(self.filterListBetaUpdate)
