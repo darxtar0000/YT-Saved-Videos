@@ -290,6 +290,12 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     import sys
+    sys._excepthook = sys.excepthook 
+    def exception_hook(exctype, value, traceback):
+        print(exctype, value, traceback)
+        sys._excepthook(exctype, value, traceback) 
+        sys.exit(1) 
+    sys.excepthook = exception_hook 
     app = QApplication(sys.argv)
     MainWindow = MainWindow()
     MainWindow.show()
