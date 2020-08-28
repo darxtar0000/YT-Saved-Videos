@@ -1,5 +1,5 @@
-from PyQt5.QtCore import Qt, QSortFilterProxyModel, QAbstractTableModel, QVariant, QModelIndex
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtCore import Qt, QSortFilterProxyModel, QAbstractTableModel, QVariant, QModelIndex, QItemSelectionModel, QAbstractItemModel
+from PyQt5.QtWidgets import QWidget, QCompleter
 from PyQt5.QtSql import QSqlQuery, QSqlQueryModel
 from uiLeftPanel import Ui_LeftPanel
 from filterProxyModel import FilterProxyModel
@@ -32,11 +32,11 @@ tagListBetaUpdate()
 '''
 
 class LeftPanel(QWidget):
-    def __init__(self, mainWindow=None):
-        super(LeftPanel, self).__init__()
+    def __init__(self, parent=None):
+        super(LeftPanel, self).__init__(parent)
         self.ui = Ui_LeftPanel()
         self.ui.setupUi(self)
-        self.mainWindow = mainWindow
+        self.mainWindow = parent
         self.importer = self.mainWindow.importer
         
         # Naming convenience
@@ -70,11 +70,27 @@ class LeftPanel(QWidget):
         self.tagSortDirDropDown.currentTextChanged['QString'].connect(self.tagListUpdate)
 
         # Initialization
+        self.tagSearchBar.keyUpPressed.connect(self.tagSearchUp)
+        self.tagSearchBar.keyDownPressed.connect(self.tagSearchDown)
         self.tagType = 0
         self.tagFilterSet = set()
         self.filterListAlphaModel = FilterListTableModel()
         self.filterListBetaUpdate()
         self.tagListBetaUpdate()
+
+    def tagSearchUp(self):
+        index = self.tagListBeta.currentIndex()
+        if index.isValid() and index.row() > 0:
+            self.tagListBeta.setCurrentIndex(index.siblingAtRow(index.row()-1))
+        else:
+            self.tagListBeta.setCurrentIndex(index.sibling(-1, 1))
+
+    def tagSearchDown(self):
+        index = self.tagListBeta.currentIndex()
+        if index.isValid() and index.row() < self.tagListBeta.model().rowCount() - 1:
+            self.tagListBeta.setCurrentIndex(index.siblingAtRow(index.row()+1))
+        else:
+            self.tagListBeta.setCurrentIndex(self.tagListBeta.model().index(0, 1))
 
     def filterListAlphaDoubleClicked(self):
         '''
@@ -101,11 +117,17 @@ class LeftPanel(QWidget):
 
     def tagSearchBarTextChanged(self):
         self.tagListBetaUpdate()
+        # self.tagListBeta.selectionModel().setCurrentIndex(0, QItemSelectionModel.Select)
 
     def tagSearchBarReturnPressed(self):
-        tag_name = self.tagSearchBar.text()
-        if len(tag_name) == 0:
+        if not self.mainWindow.videoTableHasSelection():
             return
+        elif self.tagListBeta.selectionModel().hasSelection():
+            tag_name = self.tagListBeta.currentIndex().siblingAtColumn(0).data()
+        elif len(self.tagSearchBar.text()) == 0:
+            return
+        else:
+            tag_name = self.tagSearchBar.text()
         video_ids = self.mainWindow.getVideoTableSelectionVideoIds()
         self.importer.addVideoTags(video_ids, [tag_name], yt_tags=self.tagType)
         self.tagSearchBar.clear()

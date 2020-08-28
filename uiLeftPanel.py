@@ -11,6 +11,27 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
+class LineEditKeyboard(QtWidgets.QLineEdit):
+    keyUpPressed = QtCore.pyqtSignal()
+    keyDownPressed = QtCore.pyqtSignal()
+
+    def __init__(self, parent):
+        super().__init__(parent)
+
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Up:
+            self.upPressed()
+        if event.key() == QtCore.Qt.Key_Down:
+            self.downPressed()
+        return super(LineEditKeyboard, self).keyPressEvent(event)
+        
+    def upPressed(self):
+        self.keyUpPressed.emit()
+
+    def downPressed(self):
+        self.keyDownPressed.emit()
+
+
 class Ui_LeftPanel(object):
     def setupUi(self, LeftPanel):
         LeftPanel.setObjectName("LeftPanel")
@@ -97,7 +118,8 @@ class Ui_LeftPanel(object):
         self.tagListAlpha.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.tagListAlpha.setObjectName("tagListAlpha")
         self.tagTabVertLayout.addWidget(self.tagListAlpha)
-        self.tagSearchBar = QtWidgets.QLineEdit(self.tagTab)
+        # self.tagSearchBar = QtWidgets.QLineEdit(self.tagTab)
+        self.tagSearchBar = LineEditKeyboard(self.tagTab)
         self.tagSearchBar.setText("")
         self.tagSearchBar.setClearButtonEnabled(True)
         self.tagSearchBar.setObjectName("tagSearchBar")
