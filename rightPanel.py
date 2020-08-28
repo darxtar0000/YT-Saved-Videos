@@ -70,7 +70,7 @@ class RightPanel(QWidget):
         description = self.video[DESCRIPTION].replace("\n", "<br>")
 
         pattern = r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
-        description = re.sub(pattern, r"<a href=\g<0>>\g<0></a>", description)
+        description = re.sub(pattern, r'<a href="\g<0>">\g<0></a>', description)
 
         # Changing all external SQL calls to QtSqlQueries to avoid locking
         channel_title = self.importer.getChannelTitle(self.video[CHANNEL_ID])
