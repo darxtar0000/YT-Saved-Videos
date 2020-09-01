@@ -303,7 +303,7 @@ if __name__ == "__main__":
 
 '''
 TODO LIST
-finish filter sorting
+(DONE) finish filter sorting
 rich text editor -> tabs? dialog for editting?
 ignored videos table
 (DONE) rename tag feature in tag manager
@@ -313,13 +313,13 @@ ignored videos table
     when adding parent child relationship, check for cycle
     when deleting tag, -> delete relationship -> delete from videos_tags_link -> delete from tags
     should deleted tag's parents and children be linked?
-tag autocomplete
+(DONE) tag autocomplete
 import video duration
 display video duration
 way to delete video from database
 
 Playlist editor
-Separate importing into update (from playlists + liked, stop when page of 50 has no new videos)
+(DONE) Separate importing into update (from playlists + liked, stop when page of 50 has no new videos)
     Full import (delete playlist links and re-add)
 future idea: allow editting of account playlists using api?
 '''
