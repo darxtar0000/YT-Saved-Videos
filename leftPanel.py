@@ -69,7 +69,6 @@ class LeftPanel(QWidget):
         self.filterListBeta = self.ui.filterListBeta
         self.tagListAlpha = self.ui.tagListAlpha
         self.tagListBeta = self.ui.tagListBeta
-        # self.tagSearchBar = self.ui.tagSearchBar
         self.tagTypeDropDown = self.ui.tagTypeDropDown
         self.tagSortDropDown = self.ui.tagSortDropDown
         self.tagSortDirDropDown = self.ui.tagSortDirDropDown
